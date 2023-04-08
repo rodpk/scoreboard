@@ -7,3 +7,8 @@ type Scoreboard struct {
 	Title   string
 	Players []Player
 }
+
+type ScoreboardFilters struct {
+	Title      string
+	PlayerName string
+}

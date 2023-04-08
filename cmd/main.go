@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/rodpk/scoreboard/internal/config"
@@ -10,7 +9,6 @@ import (
 )
 
 func main() {
-	
 
 	// create new mongodb
 	mongoConfig := config.NewMongoConfig("localhost", 27017, "root", "example")
@@ -23,9 +21,10 @@ func main() {
 
 	defer client.Disconnect(context.Background())
 
-
 	// todo: inject depen
-	scoreboardRepo := repository.NewScoreboardRepository(client)
+	repository.NewScoreboardRepository(client)
 
-	fmt.Printf("scoreboardRepo: %v\n", scoreboardRepo)
+
+
+
 }
