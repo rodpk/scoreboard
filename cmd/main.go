@@ -5,7 +5,10 @@ import (
 	"log"
 
 	"github.com/rodpk/scoreboard/internal/config"
+	"github.com/rodpk/scoreboard/internal/handler"
 	"github.com/rodpk/scoreboard/internal/repository"
+	"github.com/rodpk/scoreboard/internal/server"
+	"github.com/rodpk/scoreboard/internal/routes"
 )
 
 func main() {
@@ -21,10 +24,11 @@ func main() {
 
 	defer client.Disconnect(context.Background())
 
-	// todo: inject depen
-	repository.NewScoreboardRepository(client)
+	router := server.CreateServer()
 
-
-
-
+	scoreboardRepository := repository.NewScoreboardRepository(client)
+	scoreboardHandler := handler.NewScoreboardHandler(scoreboardRepository)
+	routes.InitializeRoutes(router, scoreboardHandler)
+	
+	server.StartServer(router)
 }
