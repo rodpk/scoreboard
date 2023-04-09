@@ -1,28 +1,81 @@
 package handler
 
 import (
-	"github.com/google/uuid"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
 	"github.com/rodpk/scoreboard/internal/model"
 	"github.com/rodpk/scoreboard/internal/repository"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type ScoreboardServiceImpl struct {
+type ResponseBody struct {
+	Status    int         `json:"status"`
+	Message   string      `json:"message"`
+	Data      interface{} `json:"data"`
+	Timestamp time.Time   `json:"timestamp"`
+}
+
+type ScoreboardHandlerImpl struct {
 	repository repository.ScoreboardRepository
 }
 
-func NewScoreboardService(r repository.ScoreboardRepository) ScoreboardHandler {
-	return &ScoreboardServiceImpl{
+func NewScoreboardHandler(r repository.ScoreboardRepository) ScoreboardHandler {
+	return &ScoreboardHandlerImpl{
 		repository: r,
 	}
 }
 
-func (*ScoreboardServiceImpl) CreateScoreboard(*model.Scoreboard) error {
+func (*ScoreboardHandlerImpl) AddPlayerToScoreboard(w http.ResponseWriter, r *http.Request) {
 	panic("unimplemented")
 }
 
-func (ss *ScoreboardServiceImpl) ListScoreboards(sbFilters *model.ScoreboardFilters) ([]model.Scoreboard, error) {
+func (sh *ScoreboardHandlerImpl) CreateScoreboard(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var scoreboard model.Scoreboard
+	err := json.NewDecoder(r.Body).Decode(&scoreboard)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ResponseBody{
+			Status:    http.StatusBadRequest,
+			Data:      nil,
+			Message:   fmt.Sprintf("Failed to decode request body: %v", err.Error()),
+			Timestamp: time.Now(),
+		})
+		return
+	}
+
+	err = sh.repository.CreateScoreboard(&scoreboard)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ResponseBody{
+			Status:    http.StatusInternalServerError,
+			Data:      nil,
+			Message:   err.Error(),
+			Timestamp: time.Now(),
+		})
+		return
+	}
+}
+
+func (*ScoreboardHandlerImpl) FindScoreboard(w http.ResponseWriter, r *http.Request) {
+	panic("unimplemented")
+}
+
+func (sh *ScoreboardHandlerImpl) ListScoreboards(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	sbFilters := model.ScoreboardFilters{
+		Title:      chi.URLParam(r, "title"),
+		PlayerName: chi.URLParam(r, "playerName"),
+	}
 
 	filters := bson.D{}
 	if sbFilters.Title != "" {
@@ -40,29 +93,37 @@ func (ss *ScoreboardServiceImpl) ListScoreboards(sbFilters *model.ScoreboardFilt
 		})
 	}
 
-	return ss.repository.ListScoreboards(filters)
+	scoreboards, err := sh.repository.ListScoreboards(filters)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ResponseBody{
+			Status:    http.StatusInternalServerError,
+			Data:      nil,
+			Message:   err.Error(),
+			Timestamp: time.Now(),
+		})
+		return
+	}
+
+	responseBody := ResponseBody{
+		Message: "Scoreboards retrieved successfully",
+		Data:    scoreboards,
+		Status:  http.StatusOK,
+		Timestamp: time.Now(),
+	}
+
+	json.NewEncoder(w).Encode(responseBody)
 }
 
-func (*ScoreboardServiceImpl) FindScoreboard(filter primitive.D) (*model.Scoreboard, error) {
+func (*ScoreboardHandlerImpl) RemovePlayerFromScoreboard(w http.ResponseWriter, r *http.Request) {
 	panic("unimplemented")
 }
 
-func (*ScoreboardServiceImpl) AddPlayerToScoreboard(scoreboardID uuid.UUID, player model.Player) (*model.Scoreboard, error) {
+func (*ScoreboardHandlerImpl) UpdatePlayerScore(w http.ResponseWriter, r *http.Request) {
 	panic("unimplemented")
 }
 
-func (*ScoreboardServiceImpl) CreateHistoryEntry(*model.ChangeHistory) error {
-	panic("unimplemented")
-}
-
-func (*ScoreboardServiceImpl) RemovePlayerFromScoreboard(scoreboardID uuid.UUID, playerID uuid.UUID) (*model.Scoreboard, error) {
-	panic("unimplemented")
-}
-
-func (*ScoreboardServiceImpl) UpdatePlayerScore(scoreboardID uuid.UUID, playerID uuid.UUID, value int) (*model.Scoreboard, error) {
-	panic("unimplemented")
-}
-
-func (*ScoreboardServiceImpl) UpdateScoreboardTitle(scoreboardID uuid.UUID, newTitle string) (*model.Scoreboard, error) {
+func (*ScoreboardHandlerImpl) UpdateScoreboardTitle(w http.ResponseWriter, r *http.Request) {
 	panic("unimplemented")
 }

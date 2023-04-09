@@ -10,23 +10,25 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func CreateServer() *chi.Mux {
 
 	router := chi.NewRouter()
+	router.Use(middleware.Logger)
 	return router
 }
 
 func StartServer(r *chi.Mux) {
 
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":8000",
 		Handler: r,
 	}
 
 	go func() {
-		log.Println("Starting server on port 8080...")
+		log.Println("Starting server on port 8000...")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe(): %v", err)
 		}
@@ -51,8 +53,6 @@ func StartServer(r *chi.Mux) {
 	}
 
 	log.Println("Server stopped.")
-
-
 }
 
 func CloseServer() {

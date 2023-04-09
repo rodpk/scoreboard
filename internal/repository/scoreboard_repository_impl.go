@@ -30,6 +30,8 @@ func (sr *ScoreboardRepositoryImpl) CreateScoreboard(s *model.Scoreboard) error 
 }
 
 func (sr *ScoreboardRepositoryImpl) ListScoreboards(filter primitive.D) ([]model.Scoreboard, error) {
+
+	
 	collection := sr.client.Database("scoreboard").Collection("scoreboards")
 	cur, err := collection.Find(context.Background(), filter)
 	if err != nil {
